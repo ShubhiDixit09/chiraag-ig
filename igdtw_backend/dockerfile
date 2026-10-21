@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /code
+
+# INSTALL_EXTRAS=true pulls in the ingestion pipeline and test dependencies.
+# docker-compose sets it for local development; production builds leave it
+# false so the image stays small and builds fast.
+ARG INSTALL_EXTRAS=false
+
+COPY requirements.txt requirements-pipeline.txt requirements-dev.txt ./
+
+RUN pip install --no-cache-dir -r requirements.txt && \
+    if [ "$INSTALL_EXTRAS" = "true" ]; then \
+        pip install --no-cache-dir -r requirements-pipeline.txt -r requirements-dev.txt; \
+    fi
+
+COPY . .
+
+# Shell form so $PORT expands. Render (and most PaaS) assign the port at
+# runtime; a hardcoded 8000 means the service never receives traffic.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}

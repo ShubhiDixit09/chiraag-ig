@@ -1,0 +1,1426 @@
+:root {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #20211e;
+    background: #e7e3d8;
+    font-synthesis: none
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    overflow: hidden
+}
+
+button,
+input {
+    font: inherit
+}
+
+.app-shell {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    overflow: hidden;
+    background: #e7e3d8
+}
+
+.map-canvas {
+    position: absolute;
+    inset: 0
+}
+
+.tool-header {
+    position: absolute;
+    z-index: 3;
+    left: 34px;
+    top: 28px;
+    color: #20231f;
+    pointer-events: none
+}
+
+.wordmark {
+    font-size: 17px;
+    font-weight: 850;
+    letter-spacing: .2em;
+    line-height: 1
+}
+
+.product-line {
+    font-size: 12px;
+    color: #555a53;
+    margin-top: 8px;
+    font-weight: 560
+}
+
+.header-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 9px;
+    letter-spacing: .13em;
+    font-weight: 800;
+    margin-top: 12px;
+    color: #686c65
+}
+
+.local-dot:before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #70836c;
+    border-radius: 50%;
+    margin: 0 5px 1px 0
+}
+
+.route-search {
+    position: absolute;
+    z-index: 4;
+    left: 34px;
+    top: 121px;
+    width: 308px;
+    background: #faf8f2;
+    border: 1px solid #bcb8ac;
+    box-shadow: 0 5px 16px #2c2b2517;
+    padding: 12px 13px 13px;
+    display: grid;
+    grid-template-columns: 1fr 16px;
+    gap: 0 8px
+}
+
+.place-field {
+    padding: 3px 0 9px;
+    border-bottom: 1px solid #dfdacf;
+    display: grid;
+    gap: 4px
+}
+
+.place-field:nth-of-type(2) {
+    padding-top: 10px;
+    border: 0;
+    padding-bottom: 10px
+}
+
+.place-field label {
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .13em;
+    color: #777871
+}
+
+.place-field input {
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #242723;
+    font-size: 13px;
+    font-weight: 700;
+    width: 100%
+}
+
+.place-field input:focus {
+    box-shadow: 0 2px 0 #af8229
+}
+
+.search-connector {
+    grid-column: 2;
+    grid-row: 1/3;
+    color: #a27728;
+    align-self: center;
+    font-size: 17px;
+    text-align: center
+}
+
+.find-route {
+    grid-column: 1/3;
+    border: 0;
+    background: #282b27;
+    color: #f8f5ec;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: .01em;
+    text-align: left;
+    padding: 11px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    transition: background .18s ease
+}
+
+.find-route:hover,
+.use-route:hover {
+    background: #3d403a
+}
+
+.find-route span,
+.use-route span {
+    color: #d6b25d;
+    font-size: 17px;
+    line-height: .7
+}
+
+.route-panel {
+    position: absolute;
+    z-index: 5;
+    right: 27px;
+    top: 24px;
+    bottom: 24px;
+    width: 382px;
+    overflow: auto;
+    background: #fbf9f3;
+    border: 1px solid #bdb8aa;
+    box-shadow: 0 10px 28px #2c2b2421;
+    padding: 21px 21px 14px;
+    display: flex;
+    flex-direction: column
+}
+
+.eyebrow {
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .15em;
+    color: #676a62;
+    margin: 0 0 10px
+}
+
+.recommendation {
+    border-bottom: 1px solid #ded9cf;
+    padding-bottom: 17px
+}
+
+.recommendation-title {
+    font-size: 23px;
+    font-weight: 740;
+    letter-spacing: -.045em;
+    line-height: 1
+}
+
+.route-duration {
+    font-size: 13px;
+    font-weight: 750;
+    margin-top: 7px;
+    color: #383b36
+}
+
+.route-duration span {
+    font-weight: 560;
+    color: #6d7069
+}
+
+.hero-metric {
+    background: #282b27;
+    color: #faf7ef;
+    padding: 18px 19px 16px;
+    margin: 17px 0 10px
+}
+
+.metric-number {
+    font-size: 58px;
+    font-weight: 780;
+    letter-spacing: -.08em;
+    line-height: .88
+}
+
+.metric-number span {
+    font-size: 25px;
+    letter-spacing: -.04em;
+    margin-left: 4px
+}
+
+.metric-label {
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .14em;
+    margin-top: 10px;
+    color: #ddd7ca
+}
+
+.metric-context {
+    font-size: 12px;
+    color: #cac8bf;
+    margin-top: 16px
+}
+
+.metric-context b {
+    color: #fff
+}
+
+.metric-context span {
+    color: #d5af5d;
+    margin-left: 4px
+}
+
+.use-route {
+    width: 100%;
+    border: 0;
+    background: #282b27;
+    color: #faf7ef;
+    padding: 11px 13px;
+    font-size: 12px;
+    font-weight: 750;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    transition: background .18s ease
+}
+
+.comparison {
+    padding: 17px 0;
+    border-bottom: 1px solid #ded9cf
+}
+
+.route-choice {
+    width: 100%;
+    padding: 9px 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    display: grid;
+    grid-template-columns: 19px 1fr auto;
+    align-items: center;
+    gap: 8px;
+    color: #252723;
+    text-align: left;
+    cursor: pointer
+}
+
+.route-choice:hover {
+    background: #f2eee5
+}
+
+.route-choice.selected {
+    background: #efebe1;
+    border-color: #dad3c4;
+    border-left: 3px solid #ad7f24;
+    padding-left: 4px
+}
+
+.route-swatch {
+    height: 3px;
+    display: block
+}
+
+.route-swatch.shortest {
+    background: #575b58
+}
+
+.route-swatch.safe {
+    background: #ad7f24;
+    height: 5px
+}
+
+.route-kind {
+    display: grid;
+    gap: 3px
+}
+
+.route-kind b {
+    font-size: 12px;
+    text-transform: none
+}
+
+.route-kind small {
+    font-size: 10px;
+    color: #77776f
+}
+
+.route-choice strong {
+    font-size: 12px;
+    white-space: nowrap
+}
+
+.route-choice strong small {
+    font-size: 10px;
+    font-weight: 550;
+    color: #73756e
+}
+
+.compact-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 17px;
+    border-bottom: 1px solid #ded9cf;
+    padding: 15px 0
+}
+
+.control-section {
+    min-width: 0
+}
+
+.control-title {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 9px
+}
+
+.control-title label {
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .12em;
+    color: #62655e
+}
+
+.control-title output {
+    font-size: 17px;
+    font-weight: 780;
+    letter-spacing: -.04em;
+    color: #252723
+}
+
+input[type=range] {
+    width: 100%;
+    height: 3px;
+    appearance: none;
+    background: #b8b4a9;
+    cursor: pointer;
+    border-radius: 0
+}
+
+input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 3px solid #fbf9f3;
+    background: #ad7f24;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #8c887e
+}
+
+input[type=range]::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border: 3px solid #fbf9f3;
+    background: #ad7f24;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px #8c887e
+}
+
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 9px;
+    color: #787970
+}
+
+.compact-controls .range-labels span:nth-child(2),
+.compact-controls .range-labels span:nth-child(3) {
+    display: none
+}
+
+.unknown-control {
+    padding: 15px 0 8px
+}
+
+.policy-options {
+    display: flex;
+    border: 1px solid #d2ccc0;
+    margin-bottom: 9px
+}
+
+.policy-options button {
+    border: 0;
+    border-right: 1px solid #d2ccc0;
+    background: transparent;
+    color: #535650;
+    flex: 1;
+    padding: 7px 3px;
+    font-size: 9px;
+    font-weight: 750;
+    cursor: pointer
+}
+
+.policy-options button:last-child {
+    border: 0
+}
+
+.policy-options button.active {
+    background: #e2ddd1;
+    color: #242723
+}
+
+.unknown-control>p:last-child {
+    font-size: 10px;
+    line-height: 1.45;
+    color: #6c6f68;
+    margin: 0
+}
+
+.panel-footer {
+    margin-top: auto;
+    border-top: 1px solid #ded9cf;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 7px;
+    font-size: 9px;
+    letter-spacing: .05em;
+    color: #797b74
+}
+
+.status-indicator {
+    font-weight: 850;
+    color: #5d745a
+}
+
+.status-indicator:before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    background: #70836c;
+    border-radius: 50%;
+    margin: 0 4px 1px 0
+}
+
+.quiet-loading,
+.quiet-error {
+    position: absolute;
+    z-index: 2;
+    right: 21px;
+    top: 8px;
+    font-size: 9px;
+    letter-spacing: .06em;
+    color: #686b64
+}
+
+.quiet-loading i {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border: 1px solid #a27a28;
+    border-left-color: transparent;
+    border-radius: 50%;
+    margin-left: 4px;
+    animation: spin .8s linear infinite
+}
+
+.quiet-error {
+    background: #f2e9de;
+    color: #914e3c;
+    padding: 5px
+}
+
+.quiet-error span {
+    font-weight: 800
+}
+
+.evidence-drawer {
+    position: absolute;
+    z-index: 6;
+    right: 431px;
+    top: 24px;
+    width: 342px;
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    background: #fbf9f3;
+    border: 1px solid #bdb8aa;
+    box-shadow: 0 12px 30px #2b2b2426;
+    padding: 18px;
+    animation: drawer .2s ease-out
+}
+
+.drawer-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 14px
+}
+
+.drawer-heading h2 {
+    font-size: 18px;
+    margin: 0;
+    letter-spacing: .035em
+}
+
+.close {
+    border: 0;
+    background: transparent;
+    color: #4d504a;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 3px
+}
+
+.evidence-photo {
+    height: 175px;
+    background: #c6c3b8;
+    position: relative;
+    overflow: hidden
+}
+
+.evidence-photo img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover
+}
+
+.unknown-photo img {
+    filter: grayscale(1) brightness(.55)
+}
+
+.unknown-photo div {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    text-align: center;
+    color: #fff;
+    gap: 4px;
+    text-transform: uppercase
+}
+
+.unknown-photo b {
+    font-size: 18px;
+    letter-spacing: .12em
+}
+
+.unknown-photo span {
+    font-size: 10px;
+    letter-spacing: .06em
+}
+
+.evidence-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #ded9cf;
+    padding: 13px 0
+}
+
+.evidence-stats>div {
+    display: grid;
+    gap: 4px
+}
+
+.evidence-stats>div+div {
+    border-left: 1px solid #ded9cf;
+    padding-left: 14px
+}
+
+.evidence-stats b {
+    font-size: 14px
+}
+
+.evidence-stats span {
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .1em;
+    color: #6d6f67
+}
+
+.observations,
+.score-explanation {
+    border-bottom: 1px solid #ded9cf;
+    padding: 14px 0
+}
+
+.observations p {
+    font-size: 11px;
+    margin: 0 0 7px;
+    color: #575a54
+}
+
+.observations p:not(.eyebrow) span {
+    color: #73806b;
+    font-weight: 850;
+    display: inline-block;
+    width: 13px
+}
+
+.plain-reason {
+    font-size: 12px;
+    line-height: 1.45;
+    color: #565954;
+    margin: 0 0 13px
+}
+
+.score-row {
+    margin: 0 0 10px
+}
+
+.score-row>span {
+    font-size: 10px;
+    color: #595c56;
+    display: block;
+    margin-bottom: 4px
+}
+
+.bar {
+    height: 5px;
+    background: #ded8cc
+}
+
+.bar i {
+    display: block;
+    height: 100%;
+    background: #af8229
+}
+
+.data-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #595c56;
+    padding-top: 4px
+}
+
+.data-line b {
+    color: #252723
+}
+
+.unknown-message {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #565954;
+    margin: 15px 0
+}
+
+.evidence-source {
+    font-size: 9px;
+    letter-spacing: .05em;
+    color: #777970;
+    padding-top: 12px
+}
+
+.map-legend {
+    position: absolute;
+    left: 34px;
+    bottom: 52px;
+    background: rgba(250, 248, 241, .92);
+    border: 1px solid #c9c4b8;
+    padding: 9px 10px;
+    display: flex;
+    gap: 13px;
+    box-shadow: 0 2px 10px #37352d10;
+    font-size: 10px;
+    font-weight: 650;
+    color: #50534d
+}
+
+.map-legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px
+}
+
+.map-legend i {
+    width: 15px;
+    height: 3px;
+    display: block
+}
+
+.legend-safe {
+    background: #ad7f24;
+    height: 5px !important
+}
+
+.legend-short {
+    background: #575b58
+}
+
+.legend-dark {
+    border-top: 3px dashed #151b23
+}
+
+.legend-unknown {
+    border-top: 3px dashed #6e746e
+}
+
+.map-scale {
+    position: absolute;
+    left: 34px;
+    bottom: 24px;
+    font-size: 10px;
+    color: #52554f;
+    font-weight: 750
+}
+
+.map-scale i {
+    display: inline-block;
+    width: 72px;
+    border-top: 2px solid #454842;
+    margin-right: 6px;
+    vertical-align: middle
+}
+
+.map-attribution {
+    position: absolute;
+    right: 27px;
+    bottom: 10px;
+    font-size: 9px;
+    color: #5c6058;
+    background: rgba(246, 243, 235, .82);
+    padding: 3px 5px
+}
+
+.map-name {
+    position: absolute;
+    pointer-events: none;
+    font-size: 9px;
+    font-weight: 850;
+    letter-spacing: .13em;
+    color: #777a70
+}
+
+.name-cp {
+    left: 25%;
+    top: 23%
+}
+
+.name-park {
+    left: 69%;
+    top: 21%;
+    color: #71806b
+}
+
+.name-ig {
+    left: 67%;
+    top: 68%
+}
+
+.route-chip {
+    position: absolute;
+    z-index: 2;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(250, 248, 241, .9);
+    border: 1px solid #c9c4b8;
+    padding: 8px 10px;
+    font-size: 10px;
+    font-weight: 750;
+    color: #454842;
+    box-shadow: 0 2px 10px #37352d10
+}
+
+.route-chip i {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin: 0 6px 0 0
+}
+
+.route-chip .gold {
+    background: #ad7f24
+}
+
+.route-chip .grey {
+    background: #575b58
+}
+
+.map-canvas .maplibregl-ctrl-bottom-right {
+    display: none
+}
+
+.maplibregl-popup-content {
+    font: 600 11px Inter, sans-serif;
+    padding: 7px 9px;
+    border-radius: 0
+}
+
+.maplibregl-popup-tip {
+    border-top-color: #fff
+}
+
+@keyframes drawer {
+    from {
+        opacity: 0;
+        transform: translateX(12px)
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0)
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg)
+    }
+}
+
+@media(max-width:1280px) {
+
+    .tool-header,
+    .route-search,
+    .map-legend,
+    .map-scale {
+        left: 20px
+    }
+
+    .route-panel {
+        right: 18px;
+        width: 360px
+    }
+
+    .evidence-drawer {
+        right: 397px;
+        width: 320px
+    }
+
+    .map-attribution {
+        right: 18px
+    }
+}
+
+@media(max-width:1080px) {
+    .evidence-drawer {
+        left: 20px;
+        right: auto;
+        top: 195px
+    }
+
+    .route-panel {
+        width: 338px
+    }
+
+    .map-legend {
+        bottom: 17px
+    }
+
+    .map-scale {
+        display: none
+    }
+}
+
+.place-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #d8d5cc;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.place-suggestion {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+  background: #fff;
+  border: 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.place-suggestion:hover {
+  background: #f3f1eb;
+}
+
+.place-suggestion strong {
+  display: block;
+  font-size: 14px;
+  color: #222522;
+}
+
+.place-suggestion small {
+  display: block;
+  margin-top: 3px;
+  color: #777;
+  font-size: 11px;
+}
+.metric-caveat {
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.7;
+}
+.segment-state {
+  margin: 0 0 16px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+.audit-block {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.audit-open,
+.audit-submit {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.audit-submit {
+  margin-top: 10px;
+  background: #222522;
+  color: #fff;
+  border-color: #222522;
+}
+
+.audit-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.audit-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.audit-options button {
+  flex: 1 1 auto;
+  padding: 7px 9px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.audit-options button.active {
+  background: #ad7f24;
+  border-color: #ad7f24;
+  color: #fff;
+}
+
+.audit-note,
+.audit-error {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.7;
+}
+
+.audit-error {
+  color: #b3261e;
+  opacity: 1;
+}
+/* ---------------------------------------------------------------------------
+   Cold-start placeholder
+
+   The map component needs a route before it can mount, so until the first
+   response arrives the shell is an empty sand-coloured field. On free hosting
+   that gap is about a minute after any quiet spell. This fills it with
+   something that reads as a map still drawing rather than a page that failed.
+   --------------------------------------------------------------------------- */
+
+.map-skeleton {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background-color: #e2ddd0;
+    /* Suggests city blocks without pretending to be real geography. */
+    background-image:
+        repeating-linear-gradient(90deg, rgba(32, 35, 31, .05) 0 2px, transparent 2px 124px),
+        repeating-linear-gradient(0deg, rgba(32, 35, 31, .05) 0 2px, transparent 2px 98px),
+        repeating-linear-gradient(64deg, rgba(32, 35, 31, .035) 0 3px, transparent 3px 252px);
+}
+
+.map-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(100deg,
+        transparent 32%,
+        rgba(255, 253, 247, .5) 50%,
+        transparent 68%);
+    transform: translateX(-100%);
+    animation: skeleton-sweep 2.4s ease-in-out infinite
+}
+
+@keyframes skeleton-sweep {
+    to {
+        transform: translateX(100%)
+    }
+}
+
+.wake-notice {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px;
+    max-width: calc(100vw - 48px);
+    padding: 20px 24px 22px;
+    text-align: center;
+    background: rgba(250, 248, 241, .97);
+    border: 1px solid #c9c4b8;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .10)
+}
+
+.wake-notice b {
+    display: block;
+    font-size: 14px;
+    letter-spacing: .01em;
+    color: #20231f;
+    margin-bottom: 6px
+}
+
+.wake-notice span {
+    display: block;
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: #686b64
+}
+
+.wake-notice small {
+    display: block;
+    margin-top: 12px;
+    font-size: 9px;
+    letter-spacing: .08em;
+    color: #9a9790
+}
+
+.wake-spinner {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0 auto 14px;
+    border: 2px solid #a27a28;
+    border-left-color: transparent;
+    border-radius: 50%;
+    animation: spin .8s linear infinite
+}
+
+/* ---------------------------------------------------------------------------
+   Basemap toggle
+
+   Lifted out of MapView's inline styles so the mobile layout can reposition
+   it. Visually identical to what was there before.
+   --------------------------------------------------------------------------- */
+
+/* Sheet grab handle and collapsed-search bar. Phones only -- see the mobile
+   block below. */
+.sheet-handle {
+    display: none
+}
+
+/* Collapsed-search bar. Phones only -- see the mobile block below. */
+.search-toggle {
+    display: none
+}
+
+.basemap-toggle {
+    position: absolute;
+    z-index: 10;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .14)
+}
+
+.basemap-toggle button {
+    border: 0;
+    border-radius: 6px;
+    padding: 7px 11px;
+    background: transparent;
+    color: #222522;
+    font-weight: 700;
+    cursor: pointer
+}
+
+.basemap-toggle button.active {
+    background: #222522;
+    color: #fff
+}
+
+/* ---------------------------------------------------------------------------
+   Phones
+
+   The desktop layout floats three panels over the map at once, which works
+   with a thousand pixels to spare and not at all with four hundred. Here the
+   map keeps the middle of the screen -- the part actually worth seeing -- the
+   search sits at the top, and the panels become bottom sheets.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+
+    /* Mobile browsers shrink the viewport as the address bar retracts. dvh
+       follows that; vh does not, and leaves the bottom sheet cut off. */
+    .app-shell {
+        height: 100dvh
+    }
+
+    .tool-header {
+        left: 14px;
+        top: 12px
+    }
+
+    .wordmark {
+        font-size: 15px
+    }
+
+    /* Tagline and status line are the first things to go: on a phone the
+       screen is the pitch, not the header. */
+    .product-line,
+    .header-meta {
+        display: none
+    }
+
+    .basemap-toggle {
+        top: 10px;
+        left: auto;
+        right: 10px;
+        padding: 3px
+    }
+
+    .basemap-toggle button {
+        padding: 6px 9px;
+        font-size: 11px
+    }
+
+    .search-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        position: absolute;
+        z-index: 5;
+        left: 10px;
+        right: 10px;
+        top: 46px;
+        padding: 12px 13px;
+        background: #faf8f2;
+        border: 1px solid #bcb8ac;
+        box-shadow: 0 5px 16px #2c2b2517;
+        color: #242723;
+        text-align: left;
+        cursor: pointer
+    }
+
+    .search-toggle-route {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 700
+    }
+
+    /* Long place names truncate rather than wrapping the bar to two lines. */
+    .search-toggle-route b {
+        max-width: 36vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap
+    }
+
+    .search-toggle-route i {
+        flex: none;
+        font-style: normal;
+        color: #a27728
+    }
+
+    .search-toggle-action {
+        flex: none;
+        font-size: 9px;
+        font-weight: 850;
+        letter-spacing: .12em;
+        color: #7b7d75
+    }
+
+    .route-search {
+        /* Collapsed until the bar above is tapped. */
+        display: none;
+        left: 10px;
+        right: 10px;
+        top: 96px;
+        width: auto;
+        padding: 10px 11px 11px;
+        /* The desktop form is a two-column grid with a 16px gutter holding the
+           down-arrow. At this width auto-placement drops the TO field into
+           that gutter and clips it to one character. One column, arrow inline. */
+        grid-template-columns: 1fr
+    }
+
+    .route-search.open {
+        display: grid
+    }
+
+    .search-connector {
+        grid-column: 1;
+        grid-row: auto;
+        text-align: left;
+        line-height: 1;
+        margin: -2px 0 2px 2px
+    }
+
+    /* find-route spans 1/3, which conjures an implicit second column back
+       into a one-column grid and re-splits the form. Pin it to column 1. */
+    .find-route {
+        grid-column: 1
+    }
+
+    .route-panel {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: auto;
+        max-height: 48dvh;
+        border-radius: 14px 14px 0 0;
+        border-bottom: 0;
+        padding: 8px 16px calc(12px + env(safe-area-inset-bottom));
+        box-shadow: 0 -8px 26px #2c2b2426;
+
+        /* How much stays on screen when collapsed: the handle, the heading and
+           the distance. Collapsing should free the map, not hide the answer. */
+        --peek: 126px;
+
+        /* --drag is written by useSheetDrag while a finger is down, so the
+           sheet tracks the gesture without React re-rendering the transform. */
+        transform: translateY(var(--drag, 0px));
+        transition: transform .3s cubic-bezier(.32, .72, 0, 1);
+        will-change: transform
+    }
+
+    .route-panel.collapsed {
+        transform: translateY(calc(100% - var(--peek) + var(--drag, 0px)));
+        /* Nothing below the peek is reachable, so scrolling there is a trap. */
+        overflow: hidden
+    }
+
+    /* While dragging, position comes from the finger; easing it would lag. */
+    .route-panel.dragging {
+        transition: none
+    }
+
+    .evidence-drawer {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: auto;
+        max-width: none;
+        max-height: 66dvh;
+        border-radius: 14px 14px 0 0;
+        border-bottom: 0;
+        padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+        box-shadow: 0 -10px 30px #2b2b242e
+    }
+
+    /* A real element rather than ::before, because it has to receive pointer
+       events. */
+    .sheet-handle {
+        display: block;
+        position: relative;
+        flex: none;
+        width: 100%;
+        height: 22px;
+        margin-bottom: 4px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: grab;
+        /* Stops the browser claiming the gesture for scroll or pull-to-refresh
+           before the drag handler sees it. */
+        touch-action: none
+    }
+
+    .sheet-handle:active {
+        cursor: grabbing
+    }
+
+    .sheet-handle::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 8px;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        border-radius: 2px;
+        background: #cfcabc
+    }
+
+    /* Grab handle, so the drawer reads as a sheet rather than a panel that
+       happens to be stuck to the bottom. */
+    .evidence-drawer::before {
+        content: '';
+        display: block;
+        flex: none;
+        width: 36px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 2px;
+        background: #cfcabc
+    }
+
+    /* No room for either, and the panel already names the selected route. */
+    .route-chip,
+    .map-legend,
+    .map-scale {
+        display: none
+    }
+
+    .map-attribution {
+        left: 10px;
+        right: auto;
+        bottom: 4px
+    }
+
+    /* The hero number is sized for a 380px column; it overflows a phone. */
+    .metric-number {
+        font-size: 44px
+    }
+
+    .hero-metric {
+        padding: 15px 16px 14px;
+        margin: 14px 0 10px
+    }
+
+    .recommendation-title {
+        font-size: 20px
+    }
+
+    /* Two sliders side by side leaves each about 150px. Stack them. */
+    .compact-controls {
+        grid-template-columns: 1fr;
+        gap: 14px
+    }
+
+    /* Touch targets. Nine-pixel type in a 24px-high button is a mouse
+       affordance; a thumb needs about 40px. */
+    .policy-options button {
+        padding: 11px 4px;
+        font-size: 10px
+    }
+
+    .find-route,
+    .use-route {
+        padding: 13px 12px
+    }
+
+    .route-choice {
+        padding: 11px 6px
+    }
+
+    .audit-options button {
+        padding: 11px 8px
+    }
+
+    .place-field input {
+        /* Anything under 16px makes iOS Safari zoom the page on focus, which
+           then leaves the layout scrolled sideways. */
+        font-size: 16px
+    }
+
+    .place-suggestion {
+        padding: 13px 14px
+    }
+}

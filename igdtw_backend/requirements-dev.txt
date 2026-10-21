@@ -1,0 +1,6 @@
+# Test-only dependencies.
+
+-r requirements.txt
+
+pytest
+httpx

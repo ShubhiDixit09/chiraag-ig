@@ -1,0 +1,20 @@
+# Runtime dependencies for the API only.
+# Kept deliberately small: this is what gets installed in the production
+# image. Anything used solely by the offline ingestion pipeline belongs in
+# requirements-pipeline.txt, and test-only packages in requirements-dev.txt.
+
+# FastAPI & Server
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+
+# Database & PostGIS
+psycopg2-binary
+SQLAlchemy
+geoalchemy2
+
+# Geometry & graph (used by graph_builder and routing)
+shapely
+networkx

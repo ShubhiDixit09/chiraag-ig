@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+cache/
+supabase_backup*.sql
+local_data.sqlsupabase_backup*.sql
+local_data.sql

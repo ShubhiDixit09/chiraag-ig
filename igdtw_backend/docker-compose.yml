@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: chiraag
+      POSTGRES_PASSWORD: chiraag
+      POSTGRES_DB: chiraag
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chiraag -d chiraag"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: 
+      context: .
+      args:
+       INSTALL_EXTRAS: "true"
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_USER: chiraag
+      POSTGRES_PASSWORD: chiraag
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: chiraag
+      WATCHFILES_FORCE_POLLING: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/code
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+volumes:
+  pgdata:

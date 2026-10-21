@@ -1,0 +1,18 @@
+# Offline ingestion and scoring pipeline.
+# Not needed to serve routes -- the API reads pre-computed scores from
+# PostGIS. Installing these adds several hundred MB and minutes of build
+# time, so production images should skip this file.
+
+-r requirements.txt
+
+# OSM extraction and geospatial processing
+osmnx
+geopandas
+pandas
+numpy
+
+# Mapillary API
+requests
+
+# Calibration model (pipeline/calibrate.py)
+scikit-learn

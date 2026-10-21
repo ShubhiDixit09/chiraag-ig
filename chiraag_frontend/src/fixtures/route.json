@@ -1,0 +1,17 @@
+{
+  "shortest": {
+    "geojson": { "type": "Feature", "properties": {}, "geometry": { "type": "LineString", "coordinates": [[77.2168,28.6328],[77.2186,28.6317],[77.2201,28.6306],[77.2212,28.6286],[77.2233,28.6272]] } },
+    "length_m": 812, "risk": 0.71, "dark_m": 402
+  },
+  "safest": {
+    "geojson": { "type": "Feature", "properties": {}, "geometry": { "type": "LineString", "coordinates": [[77.2168,28.6328],[77.2161,28.6313],[77.2173,28.6296],[77.2195,28.6290],[77.2212,28.6286],[77.2233,28.6272]] } },
+    "length_m": 901, "risk": 0.28, "dark_m": 96, "lambda": 4
+  },
+  "delta": { "extra_m": 89, "extra_pct": 11.0, "dark_avoided_m": 306 },
+  "segments": [
+    { "seg_id": 4412, "dark_fraction": 0.81, "longest_gap_m": 168, "is_unknown": false, "lights": 1, "image_ids": ["demo-observation-4412"] },
+    { "seg_id": 4413, "dark_fraction": 0.44, "longest_gap_m": 77, "is_unknown": false, "lights": 2, "image_ids": ["demo-observation-4413"] },
+    { "seg_id": 4414, "dark_fraction": 0, "longest_gap_m": 0, "is_unknown": true, "lights": 0, "image_ids": [] },
+    { "seg_id": 4415, "dark_fraction": 0.18, "longest_gap_m": 35, "is_unknown": false, "lights": 4, "image_ids": ["demo-observation-4415"] }
+  ]
+}
