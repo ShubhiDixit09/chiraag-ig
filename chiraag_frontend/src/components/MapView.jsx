@@ -5,11 +5,29 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 
 const API_KEY = import.meta.env.VITE_MAPTILER_KEY
 
-const STREET_STYLE =
-  `https://api.maptiler.com/maps/streets-v4/style.json?key=${API_KEY}`
+// The pilot must not render a blank map just because its old MapTiler browser
+// key is missing in a new deployment. OSM tiles include required attribution.
+// A production-scale public rollout should use its own permitted tile provider.
+const OPENSTREETMAP_STYLE = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+}
 
-const SATELLITE_STYLE =
-  `https://api.maptiler.com/maps/satellite/style.json?key=${API_KEY}`
+const STREET_STYLE = API_KEY
+  ? `https://api.maptiler.com/maps/streets-v4/style.json?key=${API_KEY}`
+  : OPENSTREETMAP_STYLE
+
+const SATELLITE_STYLE = API_KEY
+  ? `https://api.maptiler.com/maps/satellite/style.json?key=${API_KEY}`
+  : OPENSTREETMAP_STYLE
 
 
 const line = (route) => ({
@@ -316,7 +334,7 @@ export function MapView({
       style: STREET_STYLE,
       center: [77.2202, 28.6198],
       zoom: 15.65,
-      attributionControl: false,
+      attributionControl: true,
       pitchWithRotate: false,
       dragRotate: false,
     })

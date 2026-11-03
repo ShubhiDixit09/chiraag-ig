@@ -1,13 +1,12 @@
 import React from 'react'
-import { USE_MOCK_DATA } from '../lib/api'
 
-export function Header() {
+export function Header({ dataSource }) {
   return <header className="tool-header">
     <div className="wordmark">CHIRAAG</div>
     <div className="product-line">Safer walking after dark</div>
     <div className="header-meta">
       <span>NEW DELHI PILOT</span>
-      <span className="local-dot">{USE_MOCK_DATA ? 'LOCAL DATA' : 'LIVE DATA'}</span>
+      <span className="local-dot">{dataSource === 'pilot_snapshot' ? 'SEP 2026 · PILOT SNAPSHOT' : dataSource === 'live_postgis' ? 'LIVE POSTGIS EVIDENCE' : 'CHECKING ROUTE DATA'}</span>
     </div>
   </header>
 }

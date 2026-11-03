@@ -179,6 +179,12 @@ export default function App() {
 
   async function searchPlaces(query, setter) {
     clearTimeout(searchTimer.current)
+    if (!import.meta.env.VITE_MAPTILER_KEY) {
+      // The free pilot supports the six saved landmarks without a paid
+      // geocoder. Never send a request containing an undefined API key.
+      setter([])
+      return
+    }
 
     if (query.trim().length < 2) {
       setter([])
@@ -288,6 +294,23 @@ export default function App() {
       setLoading(true)
       setError(null)
 
+      if (!import.meta.env.VITE_MAPTILER_KEY) {
+        const knownPoints = new Map(
+          PRESETS.flatMap(preset => [
+            [preset.from.toLowerCase(), preset.fromCoords],
+            [preset.to.toLowerCase(), preset.toCoords],
+          ])
+        )
+        const fromCoords = knownPoints.get(fromPlace.toLowerCase())
+        const toCoords = knownPoints.get(toPlace.toLowerCase())
+        if (!fromCoords || !toCoords) {
+          throw new Error('This pilot currently supports the six mapped landmarks. Select a sample journey above to route without external geocoding.')
+        }
+        setJourney({ from: fromPlace, to: toPlace, fromCoords, toCoords })
+        setSearchOpen(false)
+        return
+      }
+
       const [fromResponse, toResponse] = await Promise.all([
         fetch(
           `https://api.maptiler.com/geocoding/${encodeURIComponent(
@@ -348,7 +371,7 @@ export default function App() {
       fromName={journey.from}
       toName={journey.to}
     /> : !error && <MapSkeleton />}
-    <Header />
+    <Header dataSource={data?.data_source} />
 
     {/* Hidden above 720px, where the form is always visible anyway. */}
     <button
@@ -627,7 +650,7 @@ export default function App() {
         <UnknownPolicyControl policy={policy} onChange={setPolicy} />
         </>
       })()}
-      <div className="panel-footer"><span className="status-indicator">{USE_MOCK_DATA ? 'LOCAL DEMO DATA' : 'LIVE DATA'}</span><span>Click a street for proof</span></div>
+      <div className="panel-footer"><span className="status-indicator">{data?.data_source === 'pilot_snapshot' ? 'SEP 2026 · PILOT SNAPSHOT' : data?.data_source === 'live_postgis' ? 'LIVE DATABASE EVIDENCE' : 'ROUTE DATA LOADING'}</span><span>Click a street for recorded evidence</span></div>
     </aside>
     <EvidencePanel evidence={selectedEvidence} onClose={() => setSelectedEvidence(null)} onAudited={handleAudited} />
   </main>

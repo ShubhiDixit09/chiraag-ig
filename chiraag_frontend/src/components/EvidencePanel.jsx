@@ -44,6 +44,8 @@ export function EvidencePanel({ evidence, onClose, onAudited }) {
 
   if (!evidence) return null
 
+  const snapshot = evidence.data_source === 'pilot_snapshot'
+
   // The API returns NULL for anything we have no evidence on. Treat missing
   // evidence as missing -- never as zero darkness.
   const unknown =
@@ -176,7 +178,12 @@ export function EvidencePanel({ evidence, onClose, onAudited }) {
       )}
 
       <div className="audit-block">
-        {showForm ? (
+        {snapshot ? (
+          <p className="audit-note" role="status">
+            Read-only September 2026 pilot evidence. New night audits cannot
+            be saved until the live database is restored.
+          </p>
+        ) : showForm ? (
           <>
             <p className="eyebrow">HOW LIT IS THIS STREET AT NIGHT?</p>
 
@@ -223,6 +230,7 @@ export function EvidencePanel({ evidence, onClose, onAudited }) {
       </div>
 
       <div className="evidence-source">
+        {snapshot && <p>Evidence date: September 2026 · archived pilot</p>}
         {audited
           ? 'Night audit · ground truth'
           : unknown
