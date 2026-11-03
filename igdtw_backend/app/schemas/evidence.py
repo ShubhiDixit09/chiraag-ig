@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 
 class SegmentEvidence(BaseModel):
+    data_source: str = 'live_postgis'
+    snapshot_date: str | None = None
     road_id: int
     length_m: float
 

@@ -83,6 +83,10 @@ class EvidenceSummary(BaseModel):
 
 
 class RouteResponse(BaseModel):
+    # Each result identifies its data source to prevent presenting a dated
+    # immutable pilot snapshot as real-time street-light safety evidence.
+    data_source: str = 'live_postgis'
+    snapshot_date: str | None = None
     status: str
     detour_multiplier_cap: float
 
