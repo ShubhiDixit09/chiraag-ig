@@ -4,7 +4,7 @@
 
 ### Evidence-backed walking routes for people travelling after dark
 
-[**Try the live prototype**](https://chiraag-1hbj.vercel.app/) · [**View the repository**](https://github.com/ShubhiDixit09/CHIRAAG)
+[**Try the working pilot snapshot**](https://chiraag-shubhidixit09.vercel.app/) · [**View the repository**](https://github.com/ShubhiDixit09/CHIRAAG)
 
 ![React 19](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-05998B?logo=fastapi&logoColor=white)
@@ -15,6 +15,8 @@
 **Team 0xPredators · Central Delhi pilot**
 
 </div>
+
+> **Hosting status (November 2026):** The original Render/Supabase routing database is unavailable. The restored website calculates genuine weighted-Dijkstra routes from the **4 September 2026 archived pilot road network** (3,970 segments) using a read-only FastAPI service. Lighting observations are not real-time, and new field audits are disabled until a persistent database is restored. Do not treat this pilot as a live safety guarantee.
 
 ---
 
