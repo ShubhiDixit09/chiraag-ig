@@ -8,6 +8,8 @@ from sqlalchemy import text
 from app.config import settings
 from app.db import Base, engine
 from app.routers import route_router, evidence_router
+from app.routers.route import snapshot_only
+from app.services.snapshot_graph import SNAPSHOT_DATE, SOURCE, load_snapshot
 
 # uvicorn owns logging configuration everywhere this runs, so borrowing its
 # logger is what makes these lines actually show up in the Render log stream.
@@ -28,6 +30,13 @@ async def lifespan(app: FastAPI):
     here, guarded, lets the API come up and report the problem instead of
     disappearing.
     """
+    if snapshot_only():
+        # Serverless mode uses only the bundled, immutable street snapshot.
+        # Do not attempt slow localhost/PostGIS connections or DB migrations.
+        logger.info("CHIRAAG starting in read-only pilot snapshot mode; %s roads", len(load_snapshot()))
+        yield
+        return
+
     logger.info("CHIRAAG starting -- database: %s", settings.database_summary)
 
     if settings.uses_supabase_direct_host:
@@ -104,6 +113,8 @@ def health_db():
     """
     Readiness. Use this to tell "the API is down" from "the database is away".
     """
+    if snapshot_only():
+        raise HTTPException(status_code=503, detail="Live PostGIS is disabled; pilot snapshot routing is available at /health/routing")
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
@@ -116,3 +127,17 @@ def health_db():
         )
 
     return {"database": "reachable", "target": settings.database_summary}
+
+
+@app.get("/health/routing", tags=["Health"])
+def routing_health():
+    """Health for actual route computation, independent of live PostGIS."""
+    if snapshot_only():
+        return {
+            "status": "ready",
+            "data_source": SOURCE,
+            "snapshot_date": SNAPSHOT_DATE,
+            "road_segments": len(load_snapshot()),
+            "audit_writes_enabled": False,
+        }
+    return {"status": "ready", "data_source": "live_postgis", "note": "Check /health/db for database readiness"}

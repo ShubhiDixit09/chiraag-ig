@@ -12,6 +12,7 @@ python-dotenv
 
 # Database & PostGIS
 psycopg2-binary
+psycopg[binary]  # SQLAlchemy PostgreSQL dialect supported by Vercel's Python runtime
 SQLAlchemy
 geoalchemy2
 
