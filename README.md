@@ -4,7 +4,7 @@
 
 ### Evidence-backed walking routes for people travelling after dark
 
-[**Try the working pilot snapshot**](https://chiraag-shubhidixit09.vercel.app/) · [**View the repository**](https://github.com/ShubhiDixit09/CHIRAAG)
+[**Open live CHIRAAG pilot**](https://chiraag-shubhidixit09.vercel.app/) · [**View the repository**](https://github.com/ShubhiDixit09/chiraag-ig)
 
 ![React 19](https://img.shields.io/badge/React-19-20232A?logo=react&logoColor=61DAFB)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-05998B?logo=fastapi&logoColor=white)
