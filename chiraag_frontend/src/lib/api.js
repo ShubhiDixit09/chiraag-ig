@@ -1,3 +1,5 @@
+import fallbackDarkGaps from '../fixtures/dark_gaps.json'
+
 // Prefer the configured PostGIS API. When it is offline in production,
 // calculate routes from the real, dated pilot dataset on the backup FastAPI.
 // Never fake a route or suppress the source field in the response.
@@ -120,4 +122,32 @@ export async function getSegment(id) {
   }
 
   return response.json()
+}
+
+export async function getDarkGaps(minGapM = 50.0, limit = 200, signal) {
+  try {
+    const response = await fetchWithPilotFailover(
+      `/api/v1/evidence/dark-gaps?min_gap_m=${minGapM}&limit=${limit}`,
+      { signal },
+      true
+    )
+
+    if (!response.ok) {
+      throw new Error('Dark gap data unavailable')
+    }
+
+    return await response.json()
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error
+    console.warn('Falling back to bundled pilot dark gap dataset:', error?.message)
+    const filtered = (fallbackDarkGaps.gaps || [])
+      .filter(g => g.longest_gap_m >= minGapM)
+      .slice(0, limit)
+    return {
+      ...fallbackDarkGaps,
+      min_gap_m: minGapM,
+      total_gaps_found: filtered.length,
+      gaps: filtered,
+    }
+  }
 }

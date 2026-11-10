@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useState, useRef } from 'react'
-import { getRoute, getSegment, USE_MOCK_DATA } from './lib/api'
+import { getRoute, getSegment, getDarkGaps, USE_MOCK_DATA } from './lib/api'
 import { Header } from './components/Header'
 import { RouteComparison } from './components/RouteComparison'
 import { HeroMetric } from './components/HeroMetric'
@@ -7,6 +7,7 @@ import { TimeControl } from './components/TimeControl'
 import { DetourControl } from './components/DetourControl'
 import { UnknownPolicy as UnknownPolicyControl } from './components/UnknownPolicy'
 import { EvidencePanel } from './components/EvidencePanel'
+import { MunicipalGapView } from './components/MunicipalGapView'
 import { MapView } from './components/MapView'
 import { MapSkeleton } from './components/MapSkeleton'
 import { useSheetDrag } from './lib/useSheetDrag'
@@ -92,9 +93,37 @@ export default function App() {
   // showing the current journey until someone wants to change it.
   const [searchOpen, setSearchOpen] = useState(false)
 
+  // Mode: 'router' (pedestrian journey search) or 'municipal' (priority dark-gap repairs)
+  const [viewMode, setViewMode] = useState('router')
+  const [darkGapsData, setDarkGapsData] = useState(null)
+  const [darkGapsLoading, setDarkGapsLoading] = useState(false)
+  const [selectedGapId, setSelectedGapId] = useState(null)
+  const [flyToCoords, setFlyToCoords] = useState(null)
+
   // Drag-to-collapse for the results sheet. Inert above 720px -- the class it
   // applies has no styles outside the mobile block.
   const sheet = useSheetDrag()
+
+  useEffect(() => {
+    let active = true
+    setDarkGapsLoading(true)
+    getDarkGaps(0.0, 250)
+      .then(res => {
+        if (!active) return
+        setDarkGapsData(res)
+      })
+      .catch(err => {
+        console.error('Failed to load municipal dark gaps:', err)
+      })
+      .finally(() => {
+        if (active) setDarkGapsLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [refreshKey])
+
 
   useEffect(() => {
     if (!journey.fromCoords || !journey.toCoords) return
@@ -169,6 +198,7 @@ export default function App() {
   }
 
   async function selectSegment(id) {
+    setSelectedGapId(id)
     try {
       setSelectedEvidence(await getSegment(id))
     } catch (error) {
@@ -176,6 +206,20 @@ export default function App() {
       setError(error.message)
     }
   }
+
+  async function handleSelectGap(gap) {
+    setSelectedGapId(gap.road_id)
+    if (gap.center) {
+      setFlyToCoords(gap.center)
+    }
+    try {
+      const evidence = await getSegment(gap.road_id)
+      setSelectedEvidence(evidence)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
 
   async function searchPlaces(query, setter) {
     clearTimeout(searchTimer.current)
@@ -364,216 +408,228 @@ export default function App() {
     {data ? <MapView
       data={data}
       selected={selectedRoute}
-      selectedSegment={selectedEvidence?.road_id ?? null}
+      selectedSegment={selectedEvidence?.road_id ?? selectedGapId ?? null}
       onSegment={selectSegment}
       fromCoords={journey.fromCoords}
       toCoords={journey.toCoords}
       fromName={journey.from}
       toName={journey.to}
+      viewMode={viewMode}
+      darkGaps={darkGapsData?.gaps || []}
+      flyToCoords={flyToCoords}
     /> : !error && <MapSkeleton />}
-    <Header dataSource={data?.data_source} />
+    <Header
+      dataSource={viewMode === 'municipal' ? (darkGapsData?.data_source || data?.data_source) : data?.data_source}
+      viewMode={viewMode}
+      onViewModeChange={setViewMode}
+    />
 
     {/* Hidden above 720px, where the form is always visible anyway. */}
-    <button
-      type="button"
-      className="search-toggle"
-      aria-expanded={searchOpen}
-      aria-controls="route-search-form"
-      onClick={() => setSearchOpen(open => !open)}
-    >
-      <span className="search-toggle-route">
-        <b>{journey.from}</b>
-        <i aria-hidden="true">&rarr;</i>
-        <b>{journey.to}</b>
-      </span>
-
-      <span className="search-toggle-action">
-        {searchOpen ? 'Close' : 'Change'}
-      </span>
-    </button>
-
-    <form
-      id="route-search-form"
-      className={searchOpen ? 'route-search open' : 'route-search'}
-      onSubmit={findRoute}
-      aria-label="Find a safer route"
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          gap: 4,
-          marginBottom: 10,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 9,
-            letterSpacing: '0.08em',
-            opacity: 0.4,
-            flex: '0 0 auto',
-          }}
+    {viewMode === 'router' && (
+      <>
+        <button
+          type="button"
+          className="search-toggle"
+          aria-expanded={searchOpen}
+          aria-controls="route-search-form"
+          onClick={() => setSearchOpen(open => !open)}
         >
-          TRY
-        </span>
+          <span className="search-toggle-route">
+            <b>{journey.from}</b>
+            <i aria-hidden="true">&rarr;</i>
+            <b>{journey.to}</b>
+          </span>
 
-        {PRESETS.map(preset => {
-          const isActive =
-            journey.from === preset.from && journey.to === preset.to
+          <span className="search-toggle-action">
+            {searchOpen ? 'Close' : 'Change'}
+          </span>
+        </button>
 
-          return (
-            <button
-              type="button"
-              key={preset.label}
-              onClick={() => applyPreset(preset)}
+        <form
+          id="route-search-form"
+          className={searchOpen ? 'route-search open' : 'route-search'}
+          onSubmit={findRoute}
+          aria-label="Find a safer route"
+        >
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 4,
+              marginBottom: 10,
+            }}
+          >
+            <span
               style={{
+                fontSize: 9,
+                letterSpacing: '0.08em',
+                opacity: 0.4,
                 flex: '0 0 auto',
-                whiteSpace: 'nowrap',
-                padding: '3px 8px',
-                fontSize: 10,
-                lineHeight: 1.5,
-                fontFamily: 'inherit',
-                borderRadius: 999,
-                border: `1px solid ${isActive ? '#222522' : 'rgba(0,0,0,0.16)'}`,
-                background: isActive ? '#222522' : '#fff',
-                color: isActive ? '#fff' : '#222522',
-                cursor: 'pointer',
               }}
             >
-              {preset.label}
-            </button>
-          )
-        })}
-      </div>
+              TRY
+            </span>
 
-      <div
-        className="place-field"
-        style={{ position: 'relative' }}
-      >
-        <label htmlFor="from">FROM</label>
-
-        <input
-          id="from"
-          value={from}
-          onFocus={() => setActiveSearch('from')}
-          onChange={e => {
-            const value = e.target.value
-            setFrom(value)
-
-            setJourney(prev => ({
-              ...prev,
-              fromCoords: null,
-            }))
-
-            searchPlaces(value, setFromSuggestions)
-          }}
-        />
-
-        {activeSearch === 'from' && fromSuggestions.length > 0 && (
-          <div className="place-suggestions">
-            {fromSuggestions.map(place => {
-              const [lon, lat] = place.geometry.coordinates
+            {PRESETS.map(preset => {
+              const isActive =
+                journey.from === preset.from && journey.to === preset.to
 
               return (
                 <button
                   type="button"
-                  key={place.id}
-                  className="place-suggestion"
-                  onClick={() => {
-                    setFrom(place.place_name || place.text)
-
-                    setJourney(prev => ({
-                      ...prev,
-                      from: place.place_name || place.text,
-                      fromCoords: {
-                        lat,
-                        lon,
-                      },
-                    }))
-
-                    setFromSuggestions([])
-                    setActiveSearch(null)
+                  key={preset.label}
+                  onClick={() => applyPreset(preset)}
+                  style={{
+                    flex: '0 0 auto',
+                    whiteSpace: 'nowrap',
+                    padding: '3px 8px',
+                    fontSize: 10,
+                    lineHeight: 1.5,
+                    fontFamily: 'inherit',
+                    borderRadius: 999,
+                    border: `1px solid ${isActive ? '#222522' : 'rgba(0,0,0,0.16)'}`,
+                    background: isActive ? '#222522' : '#fff',
+                    color: isActive ? '#fff' : '#222522',
+                    cursor: 'pointer',
                   }}
                 >
-                  <strong>{place.text}</strong>
-
-                  <small>
-                    {place.branchAddress || place.place_name}
-                    {' · '}
-                    {getDistanceKm(place).toFixed(1)} km away
-                  </small>
+                  {preset.label}
                 </button>
               )
             })}
           </div>
-        )}
-      </div>
-      <span className="search-connector" aria-hidden="true">&darr;</span>
-      <div
-        className="place-field"
-        style={{ position: 'relative' }}
-      >
-        <label htmlFor="to">TO</label>
 
-        <input
-          id="to"
-          value={to}
-          onFocus={() => setActiveSearch('to')}
-          onChange={e => {
-            const value = e.target.value
-            setTo(value)
+          <div
+            className="place-field"
+            style={{ position: 'relative' }}
+          >
+            <label htmlFor="from">FROM</label>
 
-            setJourney(prev => ({
-              ...prev,
-              toCoords: null,
-            }))
+            <input
+              id="from"
+              value={from}
+              onFocus={() => setActiveSearch('from')}
+              onChange={e => {
+                const value = e.target.value
+                setFrom(value)
 
-            searchPlaces(value, setToSuggestions)
-          }}
-        />
+                setJourney(prev => ({
+                  ...prev,
+                  fromCoords: null,
+                }))
 
-        {activeSearch === 'to' && toSuggestions.length > 0 && (
-          <div className="place-suggestions">
-            {toSuggestions.map(place => {
-              const [lon, lat] = place.geometry.coordinates
+                searchPlaces(value, setFromSuggestions)
+              }}
+            />
 
-              return (
-                <button
-                  type="button"
-                  key={place.id}
-                  className="place-suggestion"
-                  onClick={() => {
-                    setTo(place.place_name || place.text)
+            {activeSearch === 'from' && fromSuggestions.length > 0 && (
+              <div className="place-suggestions">
+                {fromSuggestions.map(place => {
+                  const [lon, lat] = place.geometry.coordinates
 
-                    setJourney(prev => ({
-                      ...prev,
-                      to: place.place_name || place.text,
-                      toCoords: {
-                        lat,
-                        lon,
-                      },
-                    }))
+                  return (
+                    <button
+                      type="button"
+                      key={place.id}
+                      className="place-suggestion"
+                      onClick={() => {
+                        setFrom(place.place_name || place.text)
 
-                    setToSuggestions([])
-                    setActiveSearch(null)
-                  }}
-                >
-                  <strong>{place.text}</strong>
+                        setJourney(prev => ({
+                          ...prev,
+                          from: place.place_name || place.text,
+                          fromCoords: {
+                            lat,
+                            lon,
+                          },
+                        }))
 
-                  <small>
-                    {place.branchAddress || place.place_name}
-                    {' · '}
-                    {getDistanceKm(place).toFixed(1)} km away
-                  </small>
-                </button>
-              )
-            })}
+                        setFromSuggestions([])
+                        setActiveSearch(null)
+                      }}
+                    >
+                      <strong>{place.text}</strong>
+
+                      <small>
+                        {place.branchAddress || place.place_name}
+                        {' · '}
+                        {getDistanceKm(place).toFixed(1)} km away
+                      </small>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      <button className="find-route" type="submit">Find safer route <span>&rarr;</span></button>
-    </form>
+          <span className="search-connector" aria-hidden="true">&darr;</span>
+          <div
+            className="place-field"
+            style={{ position: 'relative' }}
+          >
+            <label htmlFor="to">TO</label>
+
+            <input
+              id="to"
+              value={to}
+              onFocus={() => setActiveSearch('to')}
+              onChange={e => {
+                const value = e.target.value
+                setTo(value)
+
+                setJourney(prev => ({
+                  ...prev,
+                  toCoords: null,
+                }))
+
+                searchPlaces(value, setToSuggestions)
+              }}
+            />
+
+            {activeSearch === 'to' && toSuggestions.length > 0 && (
+              <div className="place-suggestions">
+                {toSuggestions.map(place => {
+                  const [lon, lat] = place.geometry.coordinates
+
+                  return (
+                    <button
+                      type="button"
+                      key={place.id}
+                      className="place-suggestion"
+                      onClick={() => {
+                        setTo(place.place_name || place.text)
+
+                        setJourney(prev => ({
+                          ...prev,
+                          to: place.place_name || place.text,
+                          toCoords: {
+                            lat,
+                            lon,
+                          },
+                        }))
+
+                        setToSuggestions([])
+                        setActiveSearch(null)
+                      }}
+                    >
+                      <strong>{place.text}</strong>
+
+                      <small>
+                        {place.branchAddress || place.place_name}
+                        {' · '}
+                        {getDistanceKm(place).toFixed(1)} km away
+                      </small>
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <button className="find-route" type="submit">Find safer route <span>&rarr;</span></button>
+        </form>
+      </>
+    )}
+
     <aside
       className={`route-panel ${sheet.className}`.trim()}
       style={sheet.style}
@@ -589,68 +645,96 @@ export default function App() {
         }
         {...sheet.handleProps}
       />
-      {loading && <div className="quiet-loading">Updating route <i /></div>}
-      {error && (
-        <div className="quiet-error">
-          {error}
-        </div>
-      )}
-      {data && (() => {
-        const coverage = Math.min(
-          data.baseline_route.metrics.coverage_ratio ?? 0,
-          data.chiraag_route.metrics.coverage_ratio ?? 0
-        )
-        const coveragePct = Math.round(coverage * 100)
-
-        // The shortest path was already the least-exposed one, so there is no
-        // safer alternative to offer. Saying that plainly beats rendering
-        // "0 m less unlit road for only 0 m extra", which reads as a failure
-        // when it is actually a finding.
-        const noSaferOption =
-          data.evidence_summary.unlit_meters_avoided <= 0 &&
-          data.evidence_summary.extra_distance_m <= 0
-
-        return <>
-        <div className="recommendation">
-          <p className="eyebrow">CHIRAAG RECOMMENDS</p>
-          <div className="recommendation-title">
-            {noSaferOption ? 'Shortest route' : 'Safer route'}
-          </div>
-          <div className="route-duration">
-            {Math.round(data.chiraag_route.metrics.total_length_m)} m
-          </div>
-
-          {noSaferOption ? (
-            <div className="metric-caveat" style={{ marginTop: 12 }}>
-              {coveragePct > 0
-                ? `No detour within your ${detour}% budget lowers unlit exposure here, so the shortest route is also the least exposed. We have lighting evidence on ${coveragePct}% of it.`
-                : `We have no lighting evidence on this route, so CHIRAAG will not claim one way is safer than another. This is the shortest path.`}
+      {viewMode === 'router' ? (
+        <>
+          {loading && <div className="quiet-loading">Updating route <i /></div>}
+          {error && (
+            <div className="quiet-error">
+              {error}
             </div>
-          ) : (
-            <HeroMetric
-              delta={{
-                extra_m: data.evidence_summary.extra_distance_m,
-                extra_pct:
-                  data.baseline_route.metrics.total_length_m > 0
-                    ? (
-                      (data.evidence_summary.extra_distance_m /
-                        data.baseline_route.metrics.total_length_m) *
-                      100
-                    ).toFixed(1)
-                    : 0,
-                dark_avoided_m: data.evidence_summary.unlit_meters_avoided,
-              }}
-              coverage={coverage}
-            />
           )}
-          <button className="use-route" onClick={() => setSelectedRoute('safe')}>Use this route <span>&rarr;</span></button>
-        </div>
-        <RouteComparison data={data} selected={selectedRoute} onSelect={setSelectedRoute} />
-        <div className="compact-controls"><TimeControl hour={hour} onChange={setHour} /><DetourControl value={detour} onChange={setDetour} /></div>
-        <UnknownPolicyControl policy={policy} onChange={setPolicy} />
+          {data && (() => {
+            const coverage = Math.min(
+              data.baseline_route.metrics.coverage_ratio ?? 0,
+              data.chiraag_route.metrics.coverage_ratio ?? 0
+            )
+            const coveragePct = Math.round(coverage * 100)
+
+            // The shortest path was already the least-exposed one, so there is no
+            // safer alternative to offer. Saying that plainly beats rendering
+            // "0 m less unlit road for only 0 m extra", which reads as a failure
+            // when it is actually a finding.
+            const noSaferOption =
+              data.evidence_summary.unlit_meters_avoided <= 0 &&
+              data.evidence_summary.extra_distance_m <= 0
+
+            return <>
+            <div className="recommendation">
+              <p className="eyebrow">CHIRAAG RECOMMENDS</p>
+              <div className="recommendation-title">
+                {noSaferOption ? 'Shortest route' : 'Safer route'}
+              </div>
+              <div className="route-duration">
+                {Math.round(data.chiraag_route.metrics.total_length_m)} m
+              </div>
+
+              {noSaferOption ? (
+                <div className="metric-caveat" style={{ marginTop: 12 }}>
+                  {coveragePct > 0
+                    ? `No detour within your ${detour}% budget lowers unlit exposure here, so the shortest route is also the least exposed. We have lighting evidence on ${coveragePct}% of it.`
+                    : `We have no lighting evidence on this route, so CHIRAAG will not claim one way is safer than another. This is the shortest path.`}
+                </div>
+              ) : (
+                <HeroMetric
+                  delta={{
+                    extra_m: data.evidence_summary.extra_distance_m,
+                    extra_pct:
+                      data.baseline_route.metrics.total_length_m > 0
+                        ? (
+                          (data.evidence_summary.extra_distance_m /
+                            data.baseline_route.metrics.total_length_m) *
+                          100
+                        ).toFixed(1)
+                        : 0,
+                    dark_avoided_m: data.evidence_summary.unlit_meters_avoided,
+                  }}
+                  coverage={coverage}
+                />
+              )}
+              <button className="use-route" onClick={() => setSelectedRoute('safe')}>Use this route <span>&rarr;</span></button>
+            </div>
+            <RouteComparison data={data} selected={selectedRoute} onSelect={setSelectedRoute} />
+            <div className="compact-controls"><TimeControl hour={hour} onChange={setHour} /><DetourControl value={detour} onChange={setDetour} /></div>
+            <UnknownPolicyControl policy={policy} onChange={setPolicy} />
+            </>
+          })()}
         </>
-      })()}
-      <div className="panel-footer"><span className="status-indicator">{data?.data_source === 'pilot_snapshot' ? 'SEP 2026 · PILOT SNAPSHOT' : data?.data_source === 'live_postgis' ? 'LIVE DATABASE EVIDENCE' : 'ROUTE DATA LOADING'}</span><span>Click a street for recorded evidence</span></div>
+      ) : (
+        <MunicipalGapView
+          gapsData={darkGapsData}
+          selectedGapId={selectedEvidence?.road_id ?? selectedGapId}
+          onSelectGap={handleSelectGap}
+          loading={darkGapsLoading}
+        />
+      )}
+      <div className="panel-footer">
+        <span className="status-indicator">
+          {viewMode === 'municipal'
+            ? (darkGapsData?.data_source === 'pilot_snapshot'
+              ? 'SEP 2026 · PILOT SNAPSHOT'
+              : 'LIVE POSTGIS EVIDENCE')
+            : (data?.data_source === 'pilot_snapshot'
+              ? 'SEP 2026 · PILOT SNAPSHOT'
+              : data?.data_source === 'live_postgis'
+              ? 'LIVE DATABASE EVIDENCE'
+              : 'ROUTE DATA LOADING')}
+        </span>
+        <span>
+          {viewMode === 'municipal'
+            ? 'Select a stretch to inspect lighting evidence'
+            : 'Click a street for recorded evidence'}
+        </span>
+      </div>
     </aside>
     <EvidencePanel evidence={selectedEvidence} onClose={() => setSelectedEvidence(null)} onAudited={handleAudited} />
   </main>

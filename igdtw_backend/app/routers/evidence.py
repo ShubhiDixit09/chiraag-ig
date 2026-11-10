@@ -9,12 +9,13 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.road_segment import RoadSegment
 from app.models.night_audit import NightAudit
-from app.schemas.evidence import SegmentEvidence, AuditSubmission
+from app.schemas.evidence import SegmentEvidence, AuditSubmission, DarkGapItem, DarkGapsResponse
 from app.routers.route import snapshot_only
 from app.services.snapshot_graph import (
     SNAPSHOT_DATE,
     SOURCE,
     get_snapshot_segment,
+    get_snapshot_dark_gaps,
 )
 
 logger = logging.getLogger("uvicorn.error")
@@ -62,6 +63,78 @@ def get_segment_evidence(segment_id: int, db: Session = Depends(get_db)):
         logger.warning("Evidence database unavailable (%s), using pilot snapshot",
                        type(error).__name__)
         return snapshot_evidence(segment_id)
+
+
+@router.get(
+    "/dark-gaps",
+    response_model=DarkGapsResponse,
+    summary="Get ranked list of worst continuous dark gaps for municipal infrastructure repair priority",
+)
+def get_dark_gaps(
+    min_gap_m: float = 50.0,
+    limit: int = 200,
+    db: Session = Depends(get_db),
+):
+    if snapshot_only():
+        gaps = get_snapshot_dark_gaps(min_gap_m=min_gap_m, limit=limit)
+        return DarkGapsResponse(
+            data_source=SOURCE,
+            snapshot_date=SNAPSHOT_DATE,
+            min_gap_m=min_gap_m,
+            total_gaps_found=len(gaps),
+            gaps=gaps,
+        )
+
+    try:
+        from geoalchemy2.shape import to_shape
+
+        query = (
+            db.query(RoadSegment)
+            .filter(RoadSegment.longest_gap_m.isnot(None))
+            .filter(RoadSegment.longest_gap_m >= min_gap_m)
+            .order_by(RoadSegment.longest_gap_m.desc())
+        )
+        if limit and limit > 0:
+            query = query.limit(limit)
+
+        rows = query.all()
+        results = []
+        for rank, row in enumerate(rows, 1):
+            geom = to_shape(row.geom)
+            centroid = geom.centroid
+            results.append(
+                DarkGapItem(
+                    road_id=row.id,
+                    osm_id=row.osm_id,
+                    length_m=round(float(row.length_m), 1),
+                    longest_gap_m=round(float(row.longest_gap_m), 1),
+                    dark_fraction=round(float(row.dark_fraction or 0.0), 3),
+                    observation_state=row.observation_state,
+                    center=[round(float(centroid.x), 6), round(float(centroid.y), 6)],
+                    coordinates=[[round(float(x), 6), round(float(y), 6)] for x, y in geom.coords],
+                    priority_rank=rank,
+                )
+            )
+
+        return DarkGapsResponse(
+            data_source="live_postgis",
+            min_gap_m=min_gap_m,
+            total_gaps_found=len(results),
+            gaps=results,
+        )
+    except (SQLAlchemyError, Exception) as error:
+        logger.warning(
+            "Evidence database unavailable (%s), using pilot snapshot for dark gaps",
+            type(error).__name__,
+        )
+        gaps = get_snapshot_dark_gaps(min_gap_m=min_gap_m, limit=limit)
+        return DarkGapsResponse(
+            data_source=SOURCE,
+            snapshot_date=SNAPSHOT_DATE,
+            min_gap_m=min_gap_m,
+            total_gaps_found=len(gaps),
+            gaps=gaps,
+        )
 
 
 @router.post(

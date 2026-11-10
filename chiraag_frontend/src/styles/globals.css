@@ -1424,3 +1424,387 @@ input[type=range]::-moz-range-thumb {
         padding: 13px 14px
     }
 }
+
+/* ==========================================================================
+   Municipal Dark Gap View & Mode Switcher
+   ========================================================================== */
+.mode-toggle-group {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    pointer-events: auto;
+}
+
+.mode-btn {
+    background: #f0ece1;
+    border: 1px solid #bcb8ac;
+    color: #444740;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.mode-btn:hover {
+    background: #e4dfd2;
+    color: #1e211e;
+}
+
+.mode-btn.active {
+    background: #20231f;
+    border-color: #20231f;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.mode-badge {
+    background: #d32f2f;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.mode-btn.active .mode-badge {
+    background: #ef5350;
+    color: #ffffff;
+}
+
+.municipal-gap-view {
+    padding: 18px 16px 24px;
+}
+
+.municipal-tag {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    color: #993333;
+    margin-bottom: 4px;
+}
+
+.municipal-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 6px;
+    color: #20231f;
+    line-height: 1.25;
+}
+
+.municipal-desc {
+    font-size: 11.5px;
+    color: #555a53;
+    line-height: 1.45;
+    margin: 0 0 14px;
+}
+
+.municipal-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.municipal-stat-card {
+    background: #f3efe6;
+    border: 1px solid #dcd7cc;
+    padding: 8px 10px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+}
+
+.municipal-stat-card .stat-label {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #6a6f66;
+    margin-bottom: 3px;
+}
+
+.municipal-stat-card .stat-value {
+    font-size: 15px;
+    font-weight: 850;
+    color: #20231f;
+    line-height: 1.15;
+}
+
+.municipal-stat-card .stat-value.critical {
+    color: #b71c1c;
+}
+
+.municipal-stat-card .stat-note {
+    font-size: 8.5px;
+    color: #7a7e75;
+    margin-top: 4px;
+    line-height: 1.2;
+}
+
+.municipal-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2ddd2;
+}
+
+.filter-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filter-pill {
+    background: #f0ece2;
+    border: 1px solid #ccc7ba;
+    color: #383b35;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.filter-pill.active {
+    background: #20231f;
+    border-color: #20231f;
+    color: #ffffff;
+}
+
+.municipal-secondary-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #555a53;
+    font-weight: 600;
+}
+
+.sort-select-wrapper select {
+    background: #ffffff;
+    border: 1px solid #ccc7ba;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 10.5px;
+    color: #20231f;
+}
+
+.csv-export-btn {
+    background: #ffffff;
+    border: 1px solid #bbb5a7;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #2b2e2a;
+}
+
+.csv-export-btn:hover {
+    background: #eeeae0;
+}
+
+.search-gaps-input {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 11px;
+    background: #ffffff;
+    border: 1px solid #ccc7ba;
+    border-radius: 4px;
+    color: #20231f;
+}
+
+.gap-list-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5px;
+    letter-spacing: .09em;
+    font-weight: 800;
+    color: #6a6f66;
+    margin-bottom: 8px;
+    padding: 0 2px;
+}
+
+.gap-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 480px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.gap-card {
+    background: #ffffff;
+    border: 1px solid #d4cfc3;
+    border-radius: 6px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.gap-card:hover {
+    border-color: #999384;
+    background: #fffdf8;
+    transform: translateY(-1px);
+}
+
+.gap-card.selected {
+    border-color: #ad7f24;
+    border-width: 1.5px;
+    background: #fffcee;
+    box-shadow: 0 3px 8px rgba(173, 127, 36, 0.16);
+}
+
+.gap-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.gap-rank {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rank-badge {
+    background: #20231f;
+    color: #ffffff;
+    font-size: 9.5px;
+    font-weight: 850;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.road-id-label {
+    font-size: 11px;
+    font-weight: 750;
+    color: #20231f;
+}
+
+.gap-distance-badge {
+    background: #fde8e8;
+    border: 1px solid #f8b4b4;
+    color: #9b1c1c;
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.gap-distance-badge strong {
+    font-weight: 850;
+}
+
+.gap-card-body {
+    margin-bottom: 6px;
+}
+
+.gap-metric-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: #555a53;
+    margin-bottom: 2px;
+}
+
+.metric-val {
+    font-weight: 700;
+    color: #20231f;
+}
+
+.dark-bar-track {
+    width: 100%;
+    height: 4px;
+    background: #eae6dd;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.dark-bar-fill {
+    height: 100%;
+    background: #c62828;
+    border-radius: 2px;
+}
+
+.gap-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #f0ece3;
+    padding-top: 6px;
+    margin-top: 4px;
+}
+
+.gap-source-tag {
+    font-size: 9px;
+    color: #72776e;
+    font-weight: 550;
+}
+
+.gap-inspect-link {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #ad7f24;
+}
+
+.gap-loading, .gap-empty {
+    padding: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: #6a6f66;
+}
+
+.municipal-chip .red-dot:before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #c62828;
+    border-radius: 50%;
+    margin: 0 6px 1px 0;
+}
+
+.legend-critical-gap {
+    display: inline-block;
+    width: 12px;
+    height: 4px;
+    background: #c62828;
+    margin-right: 4px;
+    border-radius: 1px;
+}
+
+.legend-gap-line {
+    display: inline-block;
+    width: 12px;
+    height: 3px;
+    background: #1a1d1a;
+    margin-right: 4px;
+}
+
+.legend-selected-gap {
+    display: inline-block;
+    width: 12px;
+    height: 4px;
+    background: #ad7f24;
+    margin-right: 4px;
+}
+

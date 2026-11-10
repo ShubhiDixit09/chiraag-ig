@@ -98,6 +98,29 @@ const segmentCollection = (route) => ({
     })),
 })
 
+// FeatureCollection for municipal dark gap stretches
+const darkGapsCollection = (gaps = []) => ({
+  type: 'FeatureCollection',
+  features: gaps
+    .filter(segment => segment.coordinates?.length >= 2)
+    .map(segment => ({
+      type: 'Feature',
+      properties: {
+        road_id: segment.road_id,
+        osm_id: segment.osm_id,
+        longest_gap_m: segment.longest_gap_m,
+        length_m: segment.length_m,
+        dark_fraction: segment.dark_fraction,
+        observation_state: segment.observation_state,
+        priority_rank: segment.priority_rank,
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: segment.coordinates,
+      },
+    })),
+})
+
 export function MapView({
   data,
   selected,
@@ -107,6 +130,9 @@ export function MapView({
   toCoords,
   fromName,
   toName,
+  viewMode = 'router',
+  darkGaps = [],
+  flyToCoords = null,
 }) {
   const container = useRef(null)
   const map = useRef(null)
@@ -118,6 +144,8 @@ export function MapView({
   const onSegmentRef = useRef(onSegment)
   const dataRef = useRef(data)
   const selectedRef = useRef(selected)
+  const viewModeRef = useRef(viewMode)
+  const darkGapsRef = useRef(darkGaps)
 
   useEffect(() => {
     onSegmentRef.current = onSegment
@@ -126,7 +154,9 @@ export function MapView({
   useEffect(() => {
     dataRef.current = data
     selectedRef.current = selected
-  }, [data, selected])
+    viewModeRef.current = viewMode
+    darkGapsRef.current = darkGaps
+  }, [data, selected, viewMode, darkGaps])
 
   const activeRoute = () =>
     selectedRef.current === 'safe'
@@ -150,8 +180,14 @@ export function MapView({
     event.target.getCanvas().style.cursor = ''
   }).current
 
+  function setLayerVisibility(m, layerId, isVisible) {
+    if (m.getLayer(layerId)) {
+      m.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none')
+    }
+  }
+
   function addChiraagLayers(m) {
-    if (!m.getSource('shortest')) {
+    if (!m.getSource('shortest') && data?.baseline_route) {
       m.addSource('shortest', {
         type: 'geojson',
         data: routeGeometryCollection(data.baseline_route),
@@ -169,11 +205,12 @@ export function MapView({
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
         },
       })
     }
 
-    if (!m.getSource('safest')) {
+    if (!m.getSource('safest') && data?.chiraag_route) {
       m.addSource('safest', {
         type: 'geojson',
         data: routeGeometryCollection(data.chiraag_route),
@@ -191,11 +228,12 @@ export function MapView({
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
         },
       })
     }
 
-    if (!m.getSource('segments')) {
+    if (!m.getSource('segments') && (data?.chiraag_route || data?.baseline_route)) {
       m.addSource('segments', {
         type: 'geojson',
         data: segmentCollection(
@@ -203,8 +241,6 @@ export function MapView({
         ),
       })
 
-      // Hatching over stretches we have no imagery for. This is what makes
-      // "unknown" visible rather than silently blending into the route.
       m.addLayer({
         id: 'segments-unknown',
         type: 'line',
@@ -218,16 +254,10 @@ export function MapView({
         },
         layout: {
           'line-cap': 'butt',
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
         },
       })
 
-      // Stretches we have positive evidence are mostly unlit. Without this
-      // the whole argument lives in the drawer: the map shows two coloured
-      // lines and no reason to prefer either. Drawn over the route so the
-      // route colour still reads underneath.
-      //
-      // Unknown segments carry dark_fraction -1, so they cannot match here --
-      // "we have not looked" never renders as darkness.
       m.addLayer({
         id: 'segments-dark',
         type: 'line',
@@ -241,10 +271,10 @@ export function MapView({
         },
         layout: {
           'line-cap': 'butt',
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
         },
       })
 
-      // Highlight for whichever street the drawer is showing.
       m.addLayer({
         id: 'segments-selected',
         type: 'line',
@@ -258,11 +288,10 @@ export function MapView({
         layout: {
           'line-cap': 'round',
           'line-join': 'round',
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
         },
       })
 
-      // Invisible wide hit area. Many segments are under 10 m long, so the
-      // clickable target has to be far wider than the drawn line.
       m.addLayer({
         id: 'segments-hit',
         type: 'line',
@@ -272,30 +301,120 @@ export function MapView({
           'line-width': 22,
           'line-opacity': 0,
         },
+        layout: {
+          visibility: viewModeRef.current === 'router' ? 'visible' : 'none',
+        },
       })
+
+      m.off('click', 'segments-hit', handleSegmentClick)
+      m.on('click', 'segments-hit', handleSegmentClick)
+
+      m.off('mouseenter', 'segments-hit', handleSegmentEnter)
+      m.on('mouseenter', 'segments-hit', handleSegmentEnter)
+
+      m.off('mouseleave', 'segments-hit', handleSegmentLeave)
+      m.on('mouseleave', 'segments-hit', handleSegmentLeave)
     }
+  }
 
-    m.off('click', 'segments-hit', handleSegmentClick)
-    m.on('click', 'segments-hit', handleSegmentClick)
+  function addDarkGapsLayers(m) {
+    if (!m.getSource('darkgaps')) {
+      m.addSource('darkgaps', {
+        type: 'geojson',
+        data: darkGapsCollection(darkGapsRef.current),
+      })
 
-    m.off('mouseenter', 'segments-hit', handleSegmentEnter)
-    m.on('mouseenter', 'segments-hit', handleSegmentEnter)
+      // Red/amber glow for critical gaps
+      m.addLayer({
+        id: 'darkgaps-glow',
+        type: 'line',
+        source: 'darkgaps',
+        paint: {
+          'line-color': '#c62828',
+          'line-width': 7,
+          'line-opacity': 0.45,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+          visibility: viewModeRef.current === 'municipal' ? 'visible' : 'none',
+        },
+      })
 
-    m.off('mouseleave', 'segments-hit', handleSegmentLeave)
-    m.on('mouseleave', 'segments-hit', handleSegmentLeave)
+      // Sharp dark line indicating continuous unlit stretch
+      m.addLayer({
+        id: 'darkgaps-line',
+        type: 'line',
+        source: 'darkgaps',
+        paint: {
+          'line-color': '#1a1d1a',
+          'line-width': 3.5,
+          'line-opacity': 0.95,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+          visibility: viewModeRef.current === 'municipal' ? 'visible' : 'none',
+        },
+      })
+
+      // Selected dark gap highlight
+      m.addLayer({
+        id: 'darkgaps-selected',
+        type: 'line',
+        source: 'darkgaps',
+        filter: ['==', ['get', 'road_id'], -1],
+        paint: {
+          'line-color': '#ad7f24',
+          'line-width': 9,
+          'line-opacity': 0.85,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+          visibility: viewModeRef.current === 'municipal' ? 'visible' : 'none',
+        },
+      })
+
+      // Wide hit area for clicking dark gaps
+      m.addLayer({
+        id: 'darkgaps-hit',
+        type: 'line',
+        source: 'darkgaps',
+        paint: {
+          'line-color': '#000000',
+          'line-width': 24,
+          'line-opacity': 0,
+        },
+        layout: {
+          visibility: viewModeRef.current === 'municipal' ? 'visible' : 'none',
+        },
+      })
+
+      m.off('click', 'darkgaps-hit', handleSegmentClick)
+      m.on('click', 'darkgaps-hit', handleSegmentClick)
+
+      m.off('mouseenter', 'darkgaps-hit', handleSegmentEnter)
+      m.on('mouseenter', 'darkgaps-hit', handleSegmentEnter)
+
+      m.off('mouseleave', 'darkgaps-hit', handleSegmentLeave)
+      m.on('mouseleave', 'darkgaps-hit', handleSegmentLeave)
+    }
   }
 
   function addMarkers(m) {
     markers.current.forEach(marker => marker.remove())
     markers.current = []
 
+    if (viewModeRef.current === 'municipal') {
+      return
+    }
+
     const route = activeRoute()
 
     if (!route?.nodes?.length) return
 
-    // Use the actual snapped route endpoints rather than the raw
-    // geocoded search coordinates. This keeps the markers aligned
-    // with the road network used by CHIRAAG.
+    // Snapped route endpoints
     const start = route.nodes[0]
     const end = route.nodes[route.nodes.length - 1]
 
@@ -350,28 +469,35 @@ export function MapView({
 
     m.on('load', () => {
       addChiraagLayers(m)
+      addDarkGapsLayers(m)
       addMarkers(m)
 
-      const coords = [
-        ...data.baseline_route.nodes,
-        ...data.chiraag_route.nodes,
-      ]
+      if (data?.baseline_route?.nodes?.length && data?.chiraag_route?.nodes?.length) {
+        const coords = [
+          ...data.baseline_route.nodes,
+          ...data.chiraag_route.nodes,
+        ]
 
-      const bounds = coords.reduce(
-        (b, coord) => b.extend(coord),
-        new maplibregl.LngLatBounds(coords[0], coords[0])
-      )
+        const bounds = coords.reduce(
+          (b, coord) => b.extend(coord),
+          new maplibregl.LngLatBounds(coords[0], coords[0])
+        )
 
-      m.fitBounds(bounds, {
-        padding: 100,
-        duration: 0,
-      })
+        m.fitBounds(bounds, {
+          padding: 100,
+          duration: 0,
+        })
+      }
     })
 
     return () => {
       m.off('click', 'segments-hit', handleSegmentClick)
       m.off('mouseenter', 'segments-hit', handleSegmentEnter)
       m.off('mouseleave', 'segments-hit', handleSegmentLeave)
+
+      m.off('click', 'darkgaps-hit', handleSegmentClick)
+      m.off('mouseenter', 'darkgaps-hit', handleSegmentEnter)
+      m.off('mouseleave', 'darkgaps-hit', handleSegmentLeave)
 
       markers.current.forEach(marker => marker.remove())
       markers.current = []
@@ -380,83 +506,175 @@ export function MapView({
     }
   }, [])
 
+  // Update routing data
   useEffect(() => {
     const m = map.current
-
     if (!m || !m.isStyleLoaded()) return
 
-    m.getSource('shortest')?.setData(
-      routeGeometryCollection(data.baseline_route)
-    )
+    addChiraagLayers(m)
 
-    m.getSource('safest')?.setData(
-      routeGeometryCollection(data.chiraag_route)
-    )
+    if (data?.baseline_route) {
+      m.getSource('shortest')?.setData(
+        routeGeometryCollection(data.baseline_route)
+      )
+    }
 
-    m.getSource('segments')?.setData(
-      segmentCollection(activeRoute())
-    )
+    if (data?.chiraag_route) {
+      m.getSource('safest')?.setData(
+        routeGeometryCollection(data.chiraag_route)
+      )
+    }
 
-    // Reposition the origin/destination markers to the
-    // currently active route's snapped endpoints.
+    const route = activeRoute()
+    if (route) {
+      m.getSource('segments')?.setData(segmentCollection(route))
+    }
+
     addMarkers(m)
 
-    m.setPaintProperty(
-      'shortest-line',
-      'line-width',
-      selected === 'shortest' ? 6 : 3.5
-    )
+    if (m.getLayer('shortest-line')) {
+      m.setPaintProperty(
+        'shortest-line',
+        'line-width',
+        selected === 'shortest' ? 6 : 3.5
+      )
+      m.setPaintProperty(
+        'shortest-line',
+        'line-opacity',
+        selected === 'shortest' ? 0.92 : 0.64
+      )
+    }
 
-    m.setPaintProperty(
-      'shortest-line',
-      'line-opacity',
-      selected === 'shortest' ? 0.92 : 0.64
-    )
-
-    m.setPaintProperty(
-      'safest-line',
-      'line-width',
-      selected === 'safe' ? 7 : 4.5
-    )
-
-    m.setPaintProperty(
-      'safest-line',
-      'line-opacity',
-      selected === 'safe' ? 1 : 0.72
-    )
+    if (m.getLayer('safest-line')) {
+      m.setPaintProperty(
+        'safest-line',
+        'line-width',
+        selected === 'safe' ? 7 : 4.5
+      )
+      m.setPaintProperty(
+        'safest-line',
+        'line-opacity',
+        selected === 'safe' ? 1 : 0.72
+      )
+    }
   }, [data, selected])
 
+  // Update dark gaps data
   useEffect(() => {
     const m = map.current
+    if (!m || !m.isStyleLoaded()) return
 
-    if (!m || !m.isStyleLoaded() || !m.getLayer('segments-selected')) return
+    addDarkGapsLayers(m)
+    m.getSource('darkgaps')?.setData(darkGapsCollection(darkGaps))
+  }, [darkGaps])
 
-    m.setFilter('segments-selected', [
-      '==',
-      ['get', 'road_id'],
-      selectedSegment ?? -1,
-    ])
+  // Toggle view mode layers
+  useEffect(() => {
+    const m = map.current
+    if (!m || !m.isStyleLoaded()) return
+
+    const isMunicipal = viewMode === 'municipal'
+
+    // Router layers
+    setLayerVisibility(m, 'shortest-line', !isMunicipal)
+    setLayerVisibility(m, 'safest-line', !isMunicipal)
+    setLayerVisibility(m, 'segments-unknown', !isMunicipal)
+    setLayerVisibility(m, 'segments-dark', !isMunicipal)
+    setLayerVisibility(m, 'segments-selected', !isMunicipal)
+    setLayerVisibility(m, 'segments-hit', !isMunicipal)
+
+    // Municipal layers
+    setLayerVisibility(m, 'darkgaps-glow', isMunicipal)
+    setLayerVisibility(m, 'darkgaps-line', isMunicipal)
+    setLayerVisibility(m, 'darkgaps-selected', isMunicipal)
+    setLayerVisibility(m, 'darkgaps-hit', isMunicipal)
+
+    addMarkers(m)
+
+    if (isMunicipal && darkGaps?.length) {
+      // Fit to dark gaps bounds
+      const bounds = new maplibregl.LngLatBounds()
+      darkGaps.forEach(g => {
+        if (g.center) bounds.extend(g.center)
+      })
+      if (!bounds.isEmpty()) {
+        m.fitBounds(bounds, { padding: 80, duration: 800 })
+      }
+    } else if (!isMunicipal && data?.baseline_route?.nodes?.length) {
+      const coords = [
+        ...data.baseline_route.nodes,
+        ...data.chiraag_route.nodes,
+      ]
+      const bounds = coords.reduce(
+        (b, coord) => b.extend(coord),
+        new maplibregl.LngLatBounds(coords[0], coords[0])
+      )
+      m.fitBounds(bounds, { padding: 100, duration: 800 })
+    }
+  }, [viewMode])
+
+  // Update selected segment highlight in both modes
+  useEffect(() => {
+    const m = map.current
+    if (!m || !m.isStyleLoaded()) return
+
+    const segId = selectedSegment ?? -1
+
+    if (m.getLayer('segments-selected')) {
+      m.setFilter('segments-selected', ['==', ['get', 'road_id'], segId])
+    }
+
+    if (m.getLayer('darkgaps-selected')) {
+      m.setFilter('darkgaps-selected', ['==', ['get', 'road_id'], segId])
+    }
   }, [selectedSegment])
+
+  // Handle flyTo when an item is selected from Municipal list
+  useEffect(() => {
+    const m = map.current
+    if (!m || !flyToCoords) return
+
+    m.flyTo({
+      center: flyToCoords,
+      zoom: 16.8,
+      speed: 1.4,
+      curve: 1.4,
+      essential: true,
+    })
+  }, [flyToCoords])
 
   function switchStyle() {
     const m = map.current
-
     if (!m) return
 
     const nextSatellite = !satellite
-
     setSatellite(nextSatellite)
 
     m.once('style.load', () => {
       addChiraagLayers(m)
+      addDarkGapsLayers(m)
       addMarkers(m)
 
+      const isMunicipal = viewMode === 'municipal'
+      setLayerVisibility(m, 'shortest-line', !isMunicipal)
+      setLayerVisibility(m, 'safest-line', !isMunicipal)
+      setLayerVisibility(m, 'segments-unknown', !isMunicipal)
+      setLayerVisibility(m, 'segments-dark', !isMunicipal)
+      setLayerVisibility(m, 'segments-selected', !isMunicipal)
+      setLayerVisibility(m, 'segments-hit', !isMunicipal)
+
+      setLayerVisibility(m, 'darkgaps-glow', isMunicipal)
+      setLayerVisibility(m, 'darkgaps-line', isMunicipal)
+      setLayerVisibility(m, 'darkgaps-selected', isMunicipal)
+      setLayerVisibility(m, 'darkgaps-hit', isMunicipal)
+
       if (selectedSegment !== null && selectedSegment !== undefined) {
-        m.setFilter('segments-selected', [
-          '==',
-          ['get', 'road_id'],
-          selectedSegment,
-        ])
+        if (m.getLayer('segments-selected')) {
+          m.setFilter('segments-selected', ['==', ['get', 'road_id'], selectedSegment])
+        }
+        if (m.getLayer('darkgaps-selected')) {
+          m.setFilter('darkgaps-selected', ['==', ['get', 'road_id'], selectedSegment])
+        }
       }
     })
 
@@ -469,16 +687,20 @@ export function MapView({
 
   return (
     <div ref={container} className="map-canvas">
-      <div className="route-chip">
-        <i className={selected === 'safe' ? 'gold' : 'grey'} />
+      {viewMode === 'router' ? (
+        <div className="route-chip">
+          <i className={selected === 'safe' ? 'gold' : 'grey'} />
+          {selected === 'safe'
+            ? 'Safer route selected'
+            : 'Shortest route selected'}
+        </div>
+      ) : (
+        <div className="route-chip municipal-chip">
+          <i className="red-dot" />
+          Municipal Gap View · 76 Priority Gaps (&gt;100m)
+        </div>
+      )}
 
-        {selected === 'safe'
-          ? 'Safer route selected'
-          : 'Shortest route selected'}
-      </div>
-
-      {/* Styled in globals.css rather than inline, so the mobile layout can
-          move it -- an inline style cannot be overridden by a media query. */}
       <div className="basemap-toggle">
         <button
           type="button"
@@ -501,23 +723,34 @@ export function MapView({
         </button>
       </div>
 
-      <div className="map-legend">
-        <span>
-          <i className="legend-safe" /> Safer
-        </span>
-
-        <span>
-          <i className="legend-short" /> Shortest
-        </span>
-
-        <span>
-          <i className="legend-dark" /> Unlit stretch
-        </span>
-
-        <span>
-          <i className="legend-unknown" /> Limited observation
-        </span>
-      </div>
+      {viewMode === 'router' ? (
+        <div className="map-legend">
+          <span>
+            <i className="legend-safe" /> Safer
+          </span>
+          <span>
+            <i className="legend-short" /> Shortest
+          </span>
+          <span>
+            <i className="legend-dark" /> Unlit stretch
+          </span>
+          <span>
+            <i className="legend-unknown" /> Limited observation
+          </span>
+        </div>
+      ) : (
+        <div className="map-legend">
+          <span>
+            <i className="legend-critical-gap" /> Critical gap (&gt;100 m)
+          </span>
+          <span>
+            <i className="legend-gap-line" /> Continuous dark stretch
+          </span>
+          <span>
+            <i className="legend-selected-gap" /> Selected street
+          </span>
+        </div>
+      )}
 
       <div className="map-attribution">
         © OpenStreetMap contributors &nbsp; | &nbsp; © MapTiler

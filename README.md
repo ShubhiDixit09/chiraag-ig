@@ -299,6 +299,14 @@ The response returns the baseline route, CHIRAAG route, per-segment evidence, co
 GET /api/v1/evidence/segment/{segment_id}
 ```
 
+### Municipal dark gaps (priority repair list)
+
+```http
+GET /api/v1/evidence/dark-gaps?min_gap_m=50.0&limit=100
+```
+
+Returns continuous unlit road stretches ranked in descending order of dark gap length for municipal lighting intervention and Smart City infrastructure maintenance.
+
 ### Submit a night audit
 
 ```http

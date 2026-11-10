@@ -84,6 +84,34 @@ def get_snapshot_segment(segment_id: int) -> dict | None:
     return segment_lookup().get(segment_id)
 
 
+def get_snapshot_dark_gaps(min_gap_m: float = 50.0, limit: int = 200) -> list[dict]:
+    """Return ranked list of continuous dark gaps for municipal infrastructure repair priority."""
+    items = [
+        item for item in load_snapshot()
+        if item.get("longest_gap_m") is not None and item["longest_gap_m"] >= min_gap_m
+    ]
+    items.sort(key=lambda x: x["longest_gap_m"], reverse=True)
+    if limit and limit > 0:
+        items = items[:limit]
+
+    results = []
+    for rank, item in enumerate(items, 1):
+        geom = item["geometry"]
+        centroid = geom.centroid
+        results.append({
+            "road_id": item["id"],
+            "osm_id": item["osm_id"],
+            "length_m": round(float(item["length_m"]), 1),
+            "longest_gap_m": round(float(item["longest_gap_m"]), 1),
+            "dark_fraction": round(float(item["dark_fraction"] or 0.0), 3),
+            "observation_state": item["observation_state"],
+            "center": [round(float(centroid.x), 6), round(float(centroid.y), 6)],
+            "coordinates": [[round(float(x), 6), round(float(y), 6)] for x, y in geom.coords],
+            "priority_rank": rank,
+        })
+    return results
+
+
 def build_graph_from_snapshot(
     origin_coords: tuple[float, float], dest_coords: tuple[float, float]
 ) -> nx.MultiDiGraph:

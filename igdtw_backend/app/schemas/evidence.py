@@ -18,3 +18,21 @@ class AuditSubmission(BaseModel):
     road_segment_id: int
     rating: float = Field(..., ge=0.0, le=5.0, description="0 = pitch dark, 5 = well lit")
     observed_light_count: int = Field(default=0, ge=0)
+
+class DarkGapItem(BaseModel):
+    road_id: int
+    osm_id: int
+    length_m: float
+    longest_gap_m: float
+    dark_fraction: float
+    observation_state: str
+    center: list[float]  # [lon, lat]
+    coordinates: list[list[float]]  # [[lon, lat], ...]
+    priority_rank: int
+
+class DarkGapsResponse(BaseModel):
+    data_source: str = 'live_postgis'
+    snapshot_date: str | None = None
+    min_gap_m: float
+    total_gaps_found: int
+    gaps: list[DarkGapItem]
